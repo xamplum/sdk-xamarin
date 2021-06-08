@@ -1,40 +1,48 @@
 ﻿using System;
 using Foundation;
 using Notifo.SDK;
+using Notifo.SDK.Extensions;
 using Sample.iOS.Shared;
 using UserNotifications;
 
 namespace SampleNotificationServiceExtension
 {
-	[Register("NotificationService")]
-	public class NotificationService : UNNotificationServiceExtension
-	{
-		Action<UNNotificationContent> ContentHandler { get; set; }
-		UNMutableNotificationContent BestAttemptContent { get; set; }
+    [Register("NotificationService")]
+    public class NotificationService : UNNotificationServiceExtension
+    {
+        Action<UNNotificationContent> ContentHandler { get; set; }
+        UNMutableNotificationContent BestAttemptContent { get; set; }
 
-		protected NotificationService(IntPtr handle) : base(handle)
-		{
-			// Note: this .ctor should not contain any initialization logic.
-		}
+        protected NotificationService(IntPtr handle) : base(handle)
+        {
+            // Note: this .ctor should not contain any initialization logic.
+        }
 
-		public override async void DidReceiveNotificationRequest(UNNotificationRequest request, Action<UNNotificationContent> contentHandler)
-		{
-			ContentHandler = contentHandler;
-			BestAttemptContent = (UNMutableNotificationContent)request.Content.MutableCopy();
+        public override async void DidReceiveNotificationRequest(UNNotificationRequest request, Action<UNNotificationContent> contentHandler)
+        {
+            ContentHandler = contentHandler;
+            BestAttemptContent = (UNMutableNotificationContent)request.Content.MutableCopy();
 
-			NotifoIO.Current.SetNotificationHandler(new NotificationHandler());
+            NotifoIO.Current.SetNotificationHandler(new NotificationHandler());
 
-			await NotifoIO.DidReceiveNotificationRequestAsync(request, BestAttemptContent);
+            await NotifoIO.DidReceiveNotificationRequestAsync(request, BestAttemptContent);
 
-			ContentHandler(BestAttemptContent);
-		}
+            if (request.IsSilent())
+            {
+                ContentHandler(new UNMutableNotificationContent());
+            }
+            else
+            {
+                ContentHandler(BestAttemptContent);
+            }
+        }
 
-		public override void TimeWillExpire()
-		{
-			// Called just before the extension will be terminated by the system.
-			// Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
+        public override void TimeWillExpire()
+        {
+            // Called just before the extension will be terminated by the system.
+            // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
 
-			ContentHandler(BestAttemptContent);
-		}
-	}
+            ContentHandler(BestAttemptContent);
+        }
+    }
 }

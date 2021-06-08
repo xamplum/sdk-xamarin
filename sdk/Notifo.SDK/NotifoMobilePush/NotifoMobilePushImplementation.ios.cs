@@ -45,6 +45,11 @@ namespace Notifo.SDK.NotifoMobilePush
                 await TrackNotificationAsync(notification.Id, notification.TrackingUrl);
             }
 
+            if (notification.Silent)
+            {
+                return;
+            }
+
             await EnrichNotificationContentAsync(bestAttemptContent, notification);
         }
 
@@ -56,6 +61,11 @@ namespace Notifo.SDK.NotifoMobilePush
             {
                 var eventArgs = new NotificationEventArgs(notification);
                 OnReceived(eventArgs);
+
+                if (notification.Silent)
+                {
+                    continue;
+                }
 
                 await ShowLocalNotificationAsync(notification);
             }
